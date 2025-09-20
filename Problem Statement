@@ -1,0 +1,12 @@
+Problem Statement
+The e-commerce retailer struggles to optimize inventory, marketing, and payment strategies due to limited insights into customer purchase patterns. 
+The Customer_Purchase table (1800 rows, 2023–2025) contains transactional data (CustomerID, Product, PurchaseDate, Quantity, UnitPrice, CustomerName, 
+ProductCategory, PaymentMethod, ReviewRating, TotalPrice), but lacks clear visibility into top-performing products, categories, customers, sales trends, 
+and payment preferences. This hinders data-driven decisions to boost revenue and customer satisfaction.
+
+Objectives
+•	Identify top products, categories, and customers by revenue to guide inventory and marketing strategies.
+•	Analyze sales trends (monthly peaks, year-over-year growth) and payment method performance to optimize operations.
+•	Deliver actionable recommendations (e.g., promote high-rated products, target top spenders, improve low-rated categories) to achieve a 10% revenue uplift.
+•	Ensure data integrity and query efficiency for scalable analysis.
+•	Provide stakeholder-ready reports and visuals (e.g., bar, line, pie charts) for decision-making.
