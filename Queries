@@ -1,0 +1,116 @@
+Customer Purchase History Analysis Project
+
+---Query 1: Check for NULL values in key columns (Data Cleaning)
+SELECT SUM(CASE WHEN CustomerID IS NULL THEN 1 ELSE 0 END) AS NullCustomerID,
+SUM(CASE WHEN TotalPrice IS NULL THEN 1 ELSE 0 END) AS NullTotalPrice
+FROM Customer_Purchase;
+
+---Query 2: Fix TotalPrice mismatches (Data Cleaning)
+UPDATE Customer_Purchase
+SET TotalPrice = ROUND(Quantity * UnitPrice, 2);
+
+---Query 3: Revenue by Product Category (EDA)
+SELECT ProductCategory, ROUND(SUM(TotalPrice), 0) AS Total_Sales
+FROM Customer_Purchase
+GROUP BY ProductCategory
+ORDER BY Total_Sales DESC;
+
+-- Query 4: Average Review Rating by Category (EDA)
+SELECT ProductCategory, AVG(ReviewRating) AS Avg_Review
+FROM Customer_Purchase
+GROUP BY ProductCategory
+ORDER BY Avg_Review DESC;
+
+-- Query 5: Monthly Sales Trends (EDA)
+SELECT MONTH(PurchaseDate) AS Month_Num, FORMAT(PurchaseDate, 'MMMM') AS Month, SUM(TotalPrice) AS Total_Sales
+FROM Customer_Purchase
+GROUP BY FORMAT(PurchaseDate, 'MMMM'), MONTH(PurchaseDate)
+ORDER BY Month_Num;
+
+-- Query 6: Payment Method Distribution (EDA)
+SELECT PaymentMethod, COUNT(*) AS Total_Payments
+FROM Customer_Purchase
+GROUP BY PaymentMethod
+ORDER BY COUNT(*);
+
+-- Query 7: Identify Outlier Transactions (EDA)
+SELECT CustomerID, Product, TotalPrice
+FROM Customer_Purchase
+WHERE TotalPrice > (SELECT AVG(TotalPrice) + 2 * STDEV(TotalPrice) FROM Customer_Purchase);
+
+-- Query 8: Transactions Above Average Sales (Modeling)
+SELECT CustomerID, CustomerName, TotalPrice
+FROM Customer_Purchase
+WHERE TotalPrice > (SELECT AVG(TotalPrice) FROM Customer_Purchase)
+ORDER BY TotalPrice DESC;
+
+-- Query 9: Top 10 Customers by Total Spend (Modeling)
+SELECT TOP 10 CustomerID, CustomerName, ROUND(SUM(TotalPrice), 0) AS Total_Spend
+FROM Customer_Purchase
+GROUP BY CustomerID, CustomerName
+ORDER BY Total_Spend DESC;
+
+-- Query 10: Top Products by Revenue with Rank (Modeling)
+SELECT Product, SUM(TotalPrice) AS Total_Revenue, RANK() OVER (ORDER BY SUM(TotalPrice) DESC) AS Rank
+FROM Customer_Purchase
+GROUP BY Product;
+
+-- Query 11: High-Rated Purchases (Rating >= 4) (Modeling)
+SELECT * FROM Customer_Purchase
+WHERE ReviewRating >= 4
+ORDER BY ReviewRating DESC;
+
+-- Query 12: Low-Rated High-Quantity Purchases (Modeling)
+SELECT * FROM Customer_Purchase
+WHERE ReviewRating < 3 AND Quantity >= 5
+ORDER BY Quantity DESC;
+
+-- Query 13: Year-over-Year Sales Growth (Modeling)
+SELECT YEAR(PurchaseDate) AS Year, MONTH(PurchaseDate) AS Month, ROUND(SUM(TotalPrice), 0) AS Sales,
+       ROUND(SUM(TotalPrice) - LAG(SUM(TotalPrice)) OVER (ORDER BY YEAR(PurchaseDate), MONTH(PurchaseDate)), 0) AS Pre_Month,
+       ROUND(((SUM(TotalPrice) - LAG(SUM(TotalPrice)) OVER (ORDER BY YEAR(PurchaseDate), MONTH(PurchaseDate)))
+              / NULLIF(LAG(SUM(TotalPrice)) OVER (ORDER BY YEAR(PurchaseDate), MONTH(PurchaseDate)), 0)) * 100, 2) AS Pct_Difference
+FROM Customer_Purchase
+GROUP BY YEAR(PurchaseDate), MONTH(PurchaseDate)
+ORDER BY Year, Month;
+
+-- Query 14: Optimized Sales Trend Query (Optimization)
+SELECT FORMAT(PurchaseDate, 'yyyy-MM') AS Month, SUM(TotalPrice) AS Revenue
+FROM Customer_Purchase
+WHERE PurchaseDate >= '2024-01-01'
+GROUP BY FORMAT(PurchaseDate, 'yyyy-MM')
+ORDER BY Month;
+
+-- Query 15: Verify Review Rating Range (Validation)
+SELECT MIN(ReviewRating) AS MinRating, MAX(ReviewRating) AS MaxRating
+FROM Customer_Purchase;
+
+-- Query 16: Verify Unique Customers (Validation)
+SELECT CustomerID, COUNT(*) AS DuplicateID
+FROM Customer_Purchase
+GROUP BY CustomerID
+ORDER BY COUNT(*) DESC;
+
+-- Query 17: Revenue Share by Category (Insights)
+SELECT ProductCategory, ROUND((SUM(TotalPrice) * 100.0) / (SELECT SUM(TotalPrice) FROM Customer_Purchase), 1) AS Pct_Share
+FROM Customer_Purchase
+GROUP BY ProductCategory;
+
+-- Query 18: Payment Method vs. Review Ratings (Insights)
+SELECT PaymentMethod, ROUND(AVG(CAST(ReviewRating AS FLOAT)), 2) AS Avg_Rating
+FROM Customer_Purchase
+GROUP BY PaymentMethod
+ORDER BY Avg_Rating DESC;
+
+-- Query 19: Create Summary View for Reporting (Reporting)
+CREATE VIEW CategorySummary AS
+SELECT ProductCategory, SUM(TotalPrice) AS Revenue, AVG(ReviewRating) AS AvgRating
+FROM Customer_Purchase
+GROUP BY ProductCategory;
+SELECT * FROM CategorySummary;
+
+-- Query 20: Top 5 Customers Report (Reporting)
+SELECT TOP 5 CustomerID, CustomerName, SUM(TotalPrice) AS Total_Spending
+FROM Customer_Purchase
+GROUP BY CustomerID, CustomerName
+ORDER BY SUM(TotalPrice) DESC;
